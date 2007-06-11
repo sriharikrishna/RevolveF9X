@@ -3,7 +3,7 @@ F90C=gfortran
 endif
 
 ifndef F90CFLAGS
-F90CFLAGS=
+F90CFLAGS=-O3
 endif
 
 example : revolve.o example.f90
