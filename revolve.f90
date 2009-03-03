@@ -300,12 +300,12 @@ CONTAINS
         DO i = 1, tt
           res = res*(ss+i)
           res = res/i
-          IF (res>=2.0**31) EXIT
+          IF (res>=2.0D0**31) EXIT
         END DO
-        IF (res<2.0**31-2) THEN
+        IF (res<2.0D0**31-2) THEN
           chkRange = res
         ELSE
-          chkRange = 2.0**31 - 3
+          chkRange = 2.0D0**31 - 3
           WRITE (*,fmt=*) 'warning from  MAXRANGE: returned maximal integer'
           WRITE (*,fmt=*) chkRange
         END IF
