@@ -21,6 +21,7 @@ chkRange, forwdCount
   TYPE rvAction
      INTEGER :: actionFlag = 0
      INTEGER :: iteration  = 0
+     INTEGER :: cpNum = 0
      CHARACTER, dimension(80) :: errorMsg 
   END TYPE rvAction
   
@@ -229,6 +230,7 @@ CONTAINS
             WRITE (*,'(I8)') rvNextAction%iteration
          END IF
       END IF
+      rvNextAction%cpNum=ourRWCP
     END FUNCTION rvNextAction
 
 !--------------------------------------------------------------------*
