@@ -58,12 +58,7 @@ CONTAINS
     INTEGER :: predFwdCnt ! predicted forward count 
     rvInit = .TRUE.
     errorMsg ='none'
-    IF (ALLOCATED(ourStepOf)) THEN 
-       DEALLOCATE(ourStepOf)
-    END IF
-    IF(.NOT.ALLOCATED(ourStepOf)) THEN 
-       ALLOCATE(ourStepOf(0:ourACP))
-    END IF
+
     IF (steps<0 .OR. checkpoints<0) THEN
        rvInit=.FALSE.
        errorMsg = 'revolve::rvInit: negative steps or checkpoints'
@@ -77,7 +72,15 @@ CONTAINS
        ourNumStore     = 0 
        ourRWCP         = -1 
        ourPrevCEnd     = 0 
-       ourFirstUTurned = .FALSE. 
+       ourFirstUTurned = .FALSE.
+
+       IF (ALLOCATED(ourStepOf)) THEN
+          DEALLOCATE(ourStepOf)
+       END IF
+       IF(.NOT.ALLOCATED(ourStepOf)) THEN
+          ALLOCATE(ourStepOf(0:ourACP))
+       END IF
+
        IF (ourVerbosity>0) THEN
           predFwdCnt = forwdCount(ourCEnd-ourCStart,ourACP)
           IF (predFwdCnt==-1) THEN
