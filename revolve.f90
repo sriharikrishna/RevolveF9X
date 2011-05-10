@@ -21,7 +21,7 @@ chkRange, forwdCount
   TYPE rvAction
      INTEGER :: actionFlag = 0
      INTEGER :: iteration  = 0
-     INTEGER :: cpNum = 0
+     INTEGER :: cpNum      = 0
      CHARACTER, dimension(80) :: errorMsg 
   END TYPE rvAction
   
@@ -49,16 +49,22 @@ CONTAINS
 
 !--------------------------------------------------------------------*
 
-  FUNCTION rvInit(steps,checkpoints,errorMsg)
+  FUNCTION rvInit(steps,checkpoints,errorMsg,anActionInstance)
     IMPLICIT NONE
     LOGICAL :: rvInit
     INTEGER, INTENT(IN) :: steps
     INTEGER, INTENT(IN) :: checkpoints
     CHARACTER ,dimension(:), INTENT(OUT) :: errorMsg
+    type(rvAction), optional :: anActionInstance
     INTEGER :: predFwdCnt ! predicted forward count 
     rvInit = .TRUE.
     errorMsg ='none'
-
+    IF (present(anActionInstance)) THEN
+       ! same as default init above
+       anActionInstance%actionFlag = 0
+       anActionInstance%iteration  = 0
+       anActionInstance%cpNum      = 0
+    END IF
     IF (steps<0 .OR. checkpoints<0) THEN
        rvInit=.FALSE.
        errorMsg = 'revolve::rvInit: negative steps or checkpoints'
