@@ -1,3 +1,19 @@
+!> \mainpage
+!! This is a Fortran9X adaptation of the functionality of Revolve; see Alg. 799 published as \cite Griewank2000ARA .
+!! The interface of the routines differs from the cited revolve implementation
+!! found in Adol-C and has been designed to be more in line with the
+!! Fortran 9X language features.
+!!
+!! The implementation (written by J. Utke)  is contained in revolve.f90, the use is illustrated in
+!! example.f90.
+!!
+!! The mercurial repository with the latest version can be found at:
+!! <a href="http://mercurial.mcs.anl.gov/ad/RevolveF9X">http://mercurial.mcs.anl.gov/ad/RevolveF9X</a>
+!!
+
+
+!> the module containing the revolve implementation
+!!
 MODULE revolve
   IMPLICIT NONE
 
@@ -9,46 +25,130 @@ ourSteps, ourACP, ourCStart, ourCEnd, ourVerbosity, &
 ourNumFwd , ourNumInv, ourNumStore, ourRWCP, ourPrevCEnd, ourFirstUTurned, &  
 chkRange, forwdCount
 
-  ! possible actions
+  !> store a checkpoint now
+  !! equivalent to TAKESHOT in Alg. 799
   INTEGER, PARAMETER :: rvStore      =1 
+
+  !> restore a checkpoint now
+  !! equivalent to RESTORE in Alg. 799
   INTEGER, PARAMETER :: rvRestore    =2
+
+  !> execute iteration(s) forward
+  !! equivalent to ADVANCE in Alg. 799
   INTEGER, PARAMETER :: rvForward    =3
-  INTEGER, PARAMETER :: rvFirstUTurn =4
+
+  !> tape this iteration (and leave to return later) and do the adjoint
+  !! equivalent to FIRSTTURN in Alg. 799
+    INTEGER, PARAMETER :: rvFirstUTurn =4
+
+  !> tape this iteration and do its adjoint
+  !! equivalent to YOUTURN in Alg. 799
   INTEGER, PARAMETER :: rvUTurn      =5
+
+  !> we are done with adjoining the loop
+  !! equivalent to the `terminate` enum value in Alg. 799
   INTEGER, PARAMETER :: rvDone       =6
+
+  !> an error has occurred
+  !! equivalent to the `error` enum value in Alg. 799;
+  !! see also `errMsg` in \ref rvAction
   INTEGER, PARAMETER :: rvError      =7
 
+  !> this encapsulates all the information needed to perfrom the correct action
+  !! an instance is returned from \ref rvNextAction
   TYPE rvAction
+     !> the action that is to be implemented, termination, or error;
+     !! the value must be one of:
+     !! `rvStore`, `rvRestore`, `rvForward`,
+     !! `rvFirstUTurn`, `rvUTurn`, `rvDone`, `rvError`
      INTEGER :: actionFlag = 0
+
+     !> assuming the loop iterations are in [0,ourSteps-1] and `currentIteration` variable is maintained,
+     !! the interpretation is as follows based on the value of `actionFlag`:
+     !! - `rvForward`: execute iterations as the loop: `do currentIteration, iteration-1`
+     !! - `rvRestore`: set `currentIteration=iteration`
+     !!
+     !! for all other values of `actionFlag` the value of `iteration` is meaningless
      INTEGER :: iteration  = 0
+
+     !> the checkpoint number to be stored to restored
+     !! the value is meaninfull only if `actionFlag` is set to `rvStore` or `rvRestore`;
+     !!
+     !! This is approximately equivalent to `checks` in Alg. 799.
      INTEGER :: cpNum      = 0
+
+     !> if an error has occurred `actionFlag` will be set to `rvError` and this will contain an error message
      CHARACTER, dimension(80) :: errorMsg 
   END TYPE rvAction
   
+  !> the number of iteration steps; set by calling \ref rvInit; not supposed to be set/used directly by the user
+  !! note that the iterations are expected to range in [0, ourSteps-1];
+  !!
+  !! equivalent to `steps` in Alg. 799
   INTEGER :: ourSteps    = 0 ! number of steps
-  INTEGER :: ourACP      = 0 ! allowed number of checkpoints
-  INTEGER :: ourCStart   = 0 ! current subrange start
-  INTEGER :: ourCEnd     = 0 ! current subrange end
-  INTEGER :: ourNumFwd   = 0 ! count of forward steps 
-  INTEGER :: ourNumInv   = 0 ! count of invocations of rvNextAction 
-  INTEGER :: ourNumStore = 0 ! number of stored checkpoints
-  INTEGER :: ourRWCP     = -1! checkpoint currently (re)stored (first checkpoint is 0)
-  INTEGER :: ourPrevCEnd = 0 ! previous subrange end
-  LOGICAL :: ourFirstUturned = .FALSE. ! have we first for the first time 
-  ! vector of step numbers indexed by checkpoint 
+
+  !> the number of checkpoints (ACP=AllowedCheckPoints) that can be stored at any time during the loop execution
+  !! set by calling \ref rvInit; not supposed to be set/used directly by the user
+  !!
+  !! equivalent to `snaps` in Alg. 799
+  INTEGER :: ourACP      = 0
+
+  !> current subrange start;
+  !! not to be set/referemced directly by the user
+  !!
+  !! approximately equivalent to `capo` in Alg. 799
+  INTEGER :: ourCStart   = 0
+
+  !> current subrange end;
+  !! not to be set/referemced directly by the user
+  !!
+  !! approximately equivalent to `fine` in Alg. 799
+  INTEGER :: ourCEnd     = 0
+
+  !> count of the forward steps; diagnostic only
+  INTEGER :: ourNumFwd   = 0
+
+  !> count of invocations to \ref rvNextAction ;  diagnostic only
+  INTEGER :: ourNumInv   = 0
+
+  !> count of checkpoint stores; diagnostic only
+  INTEGER :: ourNumStore = 0
+
+  !> checkpoint currently (re)stored - the first checkpoint is numbered 0;
+  !! not to be set/referemced directly by the user
+  INTEGER :: ourRWCP     = -1
+
+  !> previous subrange end;
+  !! not to be set/referemced directly by the user
+  INTEGER :: ourPrevCEnd = 0
+
+  !> have we first uturned already?;
+  !! not to be set/referemced directly by the user
+  LOGICAL :: ourFirstUturned = .FALSE.
+
+  !> vector of step numbers indexed by checkpoint;
+  !! not to be set/referemced directly by the user
   INTEGER, DIMENSION(:), ALLOCATABLE :: ourStepOf
 
-  ! for debugging purposes:
-  ! 0 includes errors 
-  ! 1 includes summary info
-  ! 2 includes iterations with checkpoints stored 
-  ! 3 includes all action results
+  !> for debugging purposes; values imply:
+  !! - 0 includes errors
+  !! - 1 includes summary info
+  !! - 2 includes iterations with checkpoints stored
+  !! - 3 includes all action results
+  !!
+  !! set via \ref rvVerbose
   INTEGER :: ourVerbosity = 0
 
 CONTAINS
 
 !--------------------------------------------------------------------*
 
+  !> method to initialize the internal state; must be called before any call to \ref rvNextAction
+  !! @param steps  the total number of steps in the iteration; equivalent to `steps` in Alg. 799
+  !! @param checkpoints the total number of checkpoints allowed to be stored at any time; equivalent to `snaps` in Alg. 799
+  !! @param errorMsg set when an error condition occurs; else set to `"none"`
+  !! @param anActionInstance  if supplied initializes its contents
+  !! @return `.true.` if successfull, else `.false.` ansd `errorMsg` will be set
   FUNCTION rvInit(steps,checkpoints,errorMsg,anActionInstance)
     IMPLICIT NONE
     LOGICAL :: rvInit
@@ -91,6 +191,7 @@ CONTAINS
           predFwdCnt = forwdCount(ourCEnd-ourCStart,ourACP)
           IF (predFwdCnt==-1) THEN
              errorMsg='error in forwdCount'
+             rvInit=.FALSE.
              RETURN
           ELSE
              WRITE (*,'(A)') 'prediction:'
@@ -103,6 +204,7 @@ CONTAINS
 
 !--------------------------------------------------------------------*
 
+  !> method to set the verbosity to a level in [0-3] as described for `ourVerbosity`
   SUBROUTINE rvVerbose(level)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: level 
@@ -110,13 +212,21 @@ CONTAINS
   END SUBROUTINE rvVerbose
 
 !--------------------------------------------------------------------*
-
+  !> the method to determine the next action; to be called in an unbound loop after \ref rvInit
+  !! @return an instance of `rvAction` set to describe the next action (see the member documentation);
+  !!
+  !! this method modifies the internal state; it is approximately equivalent to the method `revolve` in Alg. 799
   FUNCTION rvNextAction()
     IMPLICIT NONE
     REAL :: bino1, bino2, bino3, bino4, bino5
-    INTEGER :: availCP    ! available checkpoint slots 
-    INTEGER :: prevCStart ! previous subrange start
-    INTEGER :: range      ! 
+
+    !> available checkpoint slots
+    INTEGER :: availCP
+
+    !> local copy of previous subrange start
+    INTEGER :: prevCStart
+
+    INTEGER :: range
     INTEGER :: reps
     INTEGER :: i 
     type(rvAction) :: rvNextAction
@@ -243,7 +353,11 @@ CONTAINS
     END FUNCTION rvNextAction
 
 !--------------------------------------------------------------------*
-
+    !> estimates the number of checkpoints required; equivalent to `adjust` in Alg. 799
+    !! @param steps is the number of iterations
+    !! @return the number of checkpoints such that the growth in spatial complexity is balanced with the  growth in temporal complexity
+    !!
+    !! this method does not change the internal state and does not require \ref rvInit
     FUNCTION rvGuess(steps)
     IMPLICIT NONE
       INTEGER :: steps
@@ -278,7 +392,12 @@ CONTAINS
     END FUNCTION rvGuess
 
 !--------------------------------------------------------------------*
-
+    !> computes the run time overhead factor; equivalent to `expense` in Alg. 799
+    !! @param steps is the number of iterations
+    !! @param checkpoints is the number of allowed checkpoints
+    !! @return the estimated runtime overhead factor (does not account for time to write checkpoints
+    !!
+    !! this method does not change the internal state and does not require \ref rvInit
     FUNCTION rvFactor(steps,checkpoints)
     IMPLICIT NONE
       INTEGER :: checkpoints, steps
@@ -296,7 +415,7 @@ CONTAINS
     END FUNCTION rvFactor
 
 !--------------------------------------------------------------------*
-
+    !> internal method not to be referenced by the user
     FUNCTION chkRange(ss,tt)
     IMPLICIT NONE
       INTEGER :: ss, tt
@@ -325,6 +444,7 @@ CONTAINS
 
 !--------------------------------------------------------------------*
 
+    !> internal method not to be referenced by the user
     FUNCTION forwdCount(steps,checkpoints)
     IMPLICIT NONE
       INTEGER :: checkpoints, steps
