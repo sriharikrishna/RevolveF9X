@@ -434,7 +434,7 @@ CONTAINS
       IF (steps<1) THEN
         WRITE (*,fmt=*) 'revolve::rvGuess: error: steps < 1'
         rvGuess = -1
-      ELSE IF (bundle<1) THEN
+      ELSE IF (b<1) THEN
         WRITE (*,fmt=*) 'revolve::rvGuess: error: bundle < 1'
         rvGuess = -1
       ELSE
