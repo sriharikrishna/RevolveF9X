@@ -12,6 +12,7 @@ all : revolve.o
 	$(F90C) $(F90CFLAGS) -c -o $@ $<
 
 clean: 
+	cd Examples && $(MAKE) clean
 	rm -f *.o *.mod example
 
 .PHONY: all clean
