@@ -4,7 +4,7 @@ PROGRAM example
   INTEGER :: checkpoints,steps, guessedCheckpoints,verbosity=0
   TYPE(rvAction) :: theAction
   LOGICAL :: initialized=.FALSE.
-  CHARACTER , DIMENSION(80) :: errorMsg
+  CHARACTER(80) :: errorMsg
   DO WHILE (verbosity<1 .OR. verbosity >3)
      WRITE (*,FMT='(A)',ADVANCE='NO') 'verbosity level (1=summary, 2=checkpoints, 3=all actions)? :'
      READ (*,*) verbosity
@@ -15,9 +15,13 @@ PROGRAM example
      ENDIF
   END DO
   DO WHILE (.NOT.initialized)
-     WRITE (*,FMT='(A)',ADVANCE='NO') 'number of timesteps? :'
+     WRITE (*,FMT='(A)',ADVANCE='NO') 'number of steps? :'
      READ (*,*) steps
      guessedCheckPoints=rvGuess(steps)
+     IF (guessedCheckPoints==-1) THEN 
+        WRITE(*,*) 'rvGuess had an error'
+        CYCLE
+     END IF 
      WRITE (*,'(A,I8,A,F8.4)') 'revolve suggests :', guessedCheckPoints, ' checkpoints for a factor of ', &
           rvFactor(steps,guessedCheckPoints)
      WRITE (*,FMT='(A)',ADVANCE='NO') 'how many checkpoints are allowed? :'
