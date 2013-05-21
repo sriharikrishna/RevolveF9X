@@ -252,6 +252,21 @@ CONTAINS
 
 !--------------------------------------------------------------------*
 
+  !> method to change the internal state for the total number of steps/checkpoints; must be called after \ref rvInit
+  !! @param steps  the total number of steps in the iteration; equivalent to `steps` in Alg. 799
+  !! @param errorMsg set when an error condition occurs; else set to `"none"`
+  !! @return `.true.` if successfull, else `.false.` ansd `errorMsg` will be set
+  FUNCTION rvAdjust(steps,checkpoints,errorMsg)
+    IMPLICIT NONE
+    LOGICAL :: rvAdjust
+    INTEGER, INTENT(IN) :: steps
+    INTEGER, INTENT(IN) :: checkpoints
+    CHARACTER(*), INTENT(OUT) :: errorMsg
+    rvAdjust=.false.
+  END FUNCTION
+
+!--------------------------------------------------------------------*
+
   !> method to set the verbosity to a level in [0-3] as described for `ourVerbosity`
   SUBROUTINE rvVerbose(level)
     IMPLICIT NONE
