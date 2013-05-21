@@ -292,6 +292,7 @@ CONTAINS
     INTEGER :: range
     INTEGER :: reps
     INTEGER :: i 
+    LOGICAL :: rwcpTest
     type(rvAction) :: rvNextAction
     IF (ourNumInv==0) THEN
        ! first invocation
@@ -302,6 +303,10 @@ CONTAINS
     END IF
     prevCStart = ourCStart
     ourNumInv = ourNumInv + 1
+    rwcpTest=(ourRWCP==(-1))
+    IF (.not. rwcpTest) THEN 
+       rwcpTest=(ourStepOf(ourRWCP)/=ourCStart)
+    END IF
     IF ((ourCEnd-ourCStart)==0) THEN
        ! nothing in current subrange
        IF ((ourRWCP==(-1)) .OR. (ourCStart==ourStepOf(0))) THEN
@@ -332,7 +337,7 @@ CONTAINS
         ELSE
            rvNextAction%actionFlag = rvUTurn
         END IF
-     ELSE IF ((ourRWCP==(-1)) .OR. (ourStepOf(ourRWCP)/=ourCStart)) THEN
+     ELSE IF (rwcpTest) THEN
         ourRWCP = ourRWCP + 1
         IF (ourRWCP+1>ourACP) THEN
            rvNextAction%actionFlag = rvError
