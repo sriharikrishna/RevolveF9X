@@ -386,11 +386,11 @@ CONTAINS
             bino5 = 1
           END IF
           IF (ourCEnd-ourCStart<=bino1+bino3) THEN
-            ourCStart = ourCStart + bino4
+            ourCStart = int(ourCStart + bino4)
           ELSE IF (ourCEnd-ourCStart>=range-bino5) THEN
-            ourCStart = ourCStart + bino1
+            ourCStart = int(ourCStart + bino1)
           ELSE
-            ourCStart = ourCEnd - bino2 - bino3
+            ourCStart = int(ourCEnd - bino2 - bino3)
           END IF
           IF (ourCStart==prevCStart) THEN
             ourCStart = prevCStart + 1
@@ -544,12 +544,12 @@ CONTAINS
         DO i = 1, tt
           res = res*(ss+i)
           res = res/i
-          IF (res>=2.0D0**31) EXIT
+          IF (res>huge(chkrange)) EXIT
         END DO
-        IF (res<2.0D0**31-2) THEN
-          chkRange = res
+        IF (res<huge(chkrange)) THEN
+          chkRange = int(res)
         ELSE
-          chkRange = 2.0D0**31 - 3
+          chkRange = huge(chkrange)
           WRITE (*,fmt=*) 'revolve::chkRange: warning: returning maximal integer ',&
           chkRange
         END IF
