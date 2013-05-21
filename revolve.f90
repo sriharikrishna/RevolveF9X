@@ -17,13 +17,16 @@
 MODULE revolve
   IMPLICIT NONE
 
-  PUBLIC :: rvInit, rvVerbose, rvNextAction, rvGuess, rvFactor, & 
-rvStore, rvRestore, rvForward, rvFirstUTurn, rvUTurn, rvDone, rvError
+  PUBLIC :: rvInit, rvVerbose, rvNextAction, &
+rvGuess, rvFactor, & 
+rvStore, rvRestore, &
+rvForward, rvFirstUTurn, rvUTurn, rvDone, &
+rvError, rvAdjust
 
   PRIVATE :: & 
 ourSteps, ourACP, ourCStart, ourCEnd, ourVerbosity, &
-ourNumFwd , ourNumInv, ourNumStore, ourRWCP, ourPrevCEnd, ourFirstUTurned, &  
-chkRange, forwdCount
+ourNumFwd , ourNumInv, ourNumStore, ourRWCP, ourPrevCEnd, &
+ourFirstUTurned, chkRange, forwdCount
 
   !> store a checkpoint now
   !! equivalent to TAKESHOT in Alg. 799
